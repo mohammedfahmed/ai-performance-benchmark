@@ -12,13 +12,17 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MB = 1024 ** 2
 NUM_SAMPLES = 10000  # Increased number of samples for a more stable benchmark
 INPUT_SIZE = 784
-HIDDEN_SIZE = 256  # Increased hidden layer size
 OUTPUT_SIZE = 10
 BATCH_SIZE = 128  # Increased batch size
-NUM_EPOCHS = 10     # Increased number of epochs
+NUM_EPOCHS = 5     # Reduced epochs for multiple runs
 LEARNING_RATE = 0.005 # Adjusted learning rate
 WEIGHT_DECAY = 1e-4  # Added weight decay for regularization
 LOG_INTERVAL = 100  # Print loss every LOG_INTERVAL batches
+NETWORK_SIZES = [
+    {"hidden_size": 64, "num_layers": 1, "dropout": 0.1, "name": "SmallNet"},
+    {"hidden_size": 256, "num_layers": 2, "dropout": 0.2, "name": "MediumNet"},
+    {"hidden_size": 512, "num_layers": 3, "dropout": 0.3, "name": "LargeNet"},
+]
 
 # Function to get more detailed system information
 def get_system_info():
@@ -51,11 +55,11 @@ def get_system_info():
         print("  Threads:", subprocess.getoutput("sysctl -n machdep.cpu.thread_count"))
         print("  CPU Frequency:", subprocess.getoutput("sysctl -n hw.cpufrequency_max") + " Hz (max)")
 
-    print(f"CPU Usage: {psutil.cpu_percent()}%")
-    print(f"Memory Usage: {psutil.virtual_memory().percent}%")
+    print(f"CPU Usage (at start): {psutil.cpu_percent()}%")
+    print(f"Memory Usage (at start): {psutil.virtual_memory().percent}%")
     mem = psutil.virtual_memory()
     print(f"  Total Memory: {mem.total / MB:.2f} MB")
-    print(f"  Available Memory: {mem.available / MB:.2f} MB")
+    print(f"  Available Memory (at start): {mem.available / MB:.2f} MB")
 
     if torch.cuda.is_available():
         print(f"\n--- GPU Information ---")
@@ -63,34 +67,38 @@ def get_system_info():
         for i in range(num_gpus):
             print(f"GPU Device {i}: {torch.cuda.get_device_name(i)}")
             print(f"  Total Memory: {torch.cuda.get_device_properties(i).total_memory / MB:.2f} MB")
-            print(f"  Allocated Memory: {torch.cuda.memory_allocated(i) / MB:.2f} MB")
-            print(f"  Cached Memory: {torch.cuda.memory_cached(i) / MB:.2f} MB")
+            print(f"  Allocated Memory (at start): {torch.cuda.memory_allocated(i) / MB:.2f} MB")
+            print(f"  Cached Memory (at start): {torch.cuda.memory_cached(i) / MB:.2f} MB")
     else:
         print("\nNo CUDA-enabled GPU available.")
-    print("-" * 30)
+    print("-" * 40)
 
-# Improved Neural Network Training Benchmark with more metrics
-def neural_net_benchmark():
-    print("\n--- Neural Network Benchmark ---")
+# Neural Network Training Benchmark with configurable size
+def neural_net_benchmark(network_config):
+    print(f"\n--- Neural Network Benchmark: {network_config['name']} ---")
+    hidden_size = network_config['hidden_size']
+    num_layers = network_config['num_layers']
+    dropout_prob = network_config['dropout']
+    model_name = network_config['name']
 
-    # Create a slightly more complex neural network
-    class ImprovedNN(nn.Module):
-        def __init__(self):
+    # Create a configurable neural network
+    class FlexibleNN(nn.Module):
+        def __init__(self, input_size, hidden_size, output_size, num_layers, dropout_prob):
             super().__init__()
-            self.fc1 = nn.Linear(INPUT_SIZE, HIDDEN_SIZE)
-            self.relu1 = nn.ReLU()
-            self.dropout1 = nn.Dropout(0.2)
-            self.fc2 = nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE // 2)
-            self.relu2 = nn.ReLU()
-            self.dropout2 = nn.Dropout(0.2)
-            self.fc3 = nn.Linear(HIDDEN_SIZE // 2, OUTPUT_SIZE)
+            self.layers = nn.ModuleList()
+            self.layers.append(nn.Linear(input_size, hidden_size))
+            self.layers.append(nn.ReLU())
+            self.layers.append(nn.Dropout(dropout_prob))
+            for _ in range(num_layers - 1):
+                self.layers.append(nn.Linear(hidden_size, hidden_size))
+                self.layers.append(nn.ReLU())
+                self.layers.append(nn.Dropout(dropout_prob))
+            self.output_layer = nn.Linear(hidden_size, output_size)
 
         def forward(self, x):
-            x = self.relu1(self.fc1(x))
-            x = self.dropout1(x)
-            x = self.relu2(self.fc2(x))
-            x = self.dropout2(x)
-            x = self.fc3(x)
+            for layer in self.layers:
+                x = layer(x)
+            x = self.output_layer(x)
             return x
 
     # Create a random dataset for training
@@ -102,13 +110,23 @@ def neural_net_benchmark():
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     # Initialize the neural network, loss function, and optimizer
-    model = ImprovedNN().to(DEVICE)
+    model = FlexibleNN(INPUT_SIZE, hidden_size, OUTPUT_SIZE, num_layers, dropout_prob).to(DEVICE)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY) # Using Adam optimizer
+
+    # Report network size (number of parameters)
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Network Architecture: {num_layers} layers, Hidden Size: {hidden_size}, Dropout: {dropout_prob}")
+    print(f"Total Parameters: {total_params:,}")
+    print(f"Trainable Parameters: {trainable_params:,}")
+    print("-" * 40)
 
     # Start timing the training
     start_time = time.time()
     total_loss = 0.0
+    peak_memory_allocated = 0
+    peak_memory_cached = 0
 
     model.train()
     for epoch in range(NUM_EPOCHS):
@@ -123,10 +141,13 @@ def neural_net_benchmark():
             optimizer.step()
             running_loss += loss.item()
 
+            if torch.cuda.is_available():
+                peak_memory_allocated = max(peak_memory_allocated, torch.cuda.memory_allocated(DEVICE))
+                peak_memory_cached = max(peak_memory_cached, torch.cuda.memory_cached(DEVICE))
+
             if (i + 1) % LOG_INTERVAL == 0:
-                print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Batch {i+1}/{len(train_loader)}, Loss: {loss.item():.4f}, "
-                      f"GPU Mem Allocated: {torch.cuda.memory_allocated(DEVICE) / MB:.2f} MB"
-                      if torch.cuda.is_available() else "", end='\r')
+                gpu_mem_str = f", GPU Mem Allocated: {torch.cuda.memory_allocated(DEVICE) / MB:.2f} MB" if torch.cuda.is_available() else ""
+                print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Batch {i+1}/{len(train_loader)}, Loss: {loss.item():.4f}{gpu_mem_str}", end='\r')
 
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
@@ -137,14 +158,26 @@ def neural_net_benchmark():
     end_time = time.time()
     training_time = end_time - start_time
     avg_total_loss = total_loss / NUM_EPOCHS
-    print(f"\nNeural Network Training Time: {training_time:.2f} seconds")
+
+    print(f"\n--- Benchmark Results: {model_name} ---")
+    print(f"Training Time: {training_time:.2f} seconds")
     print(f"Average Loss over {NUM_EPOCHS} Epochs: {avg_total_loss:.4f}")
-    print("-" * 30)
+    if torch.cuda.is_available():
+        print(f"Peak GPU Memory Allocated: {peak_memory_allocated / MB:.2f} MB")
+        print(f"Peak GPU Memory Cached: {peak_memory_cached / MB:.2f} MB")
+
+    # Report final CPU and Memory usage
+    print(f"CPU Usage (at end): {psutil.cpu_percent()}%")
+    mem_end = psutil.virtual_memory()
+    print(f"Memory Usage (at end): {mem_end.percent}%")
+    print(f"  Available Memory (at end): {mem_end.available / MB:.2f} MB")
+    print("-" * 40)
 
 # Main function to run the benchmarks
 def main():
     get_system_info()
-    neural_net_benchmark()
+    for network_config in NETWORK_SIZES:
+        neural_net_benchmark(network_config)
 
 if __name__ == "__main__":
     main()
