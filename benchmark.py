@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from torch import nn, optim
 import numpy as np
 import os
+import platform  # For more detailed system info
 
 # Constants for better readability and easier modification
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,22 +18,58 @@ BATCH_SIZE = 128  # Increased batch size
 NUM_EPOCHS = 10     # Increased number of epochs
 LEARNING_RATE = 0.005 # Adjusted learning rate
 WEIGHT_DECAY = 1e-4  # Added weight decay for regularization
+LOG_INTERVAL = 100  # Print loss every LOG_INTERVAL batches
 
-# Function to get system information
+# Function to get more detailed system information
 def get_system_info():
     print("--- System Information ---")
+    print(f"Operating System: {platform.system()} {platform.release()}")
+    print(f"CPU: {platform.processor()}")
+    cpu_info = {}
+    if platform.system() == "Linux":
+        with open("/proc/cpuinfo", "r") as f:
+            for line in f:
+                if ":" in line:
+                    key, value = line.strip().split(":", 1)
+                    cpu_info[key.strip()] = value.strip()
+        print(f"  Model Name: {cpu_info.get('model name', 'N/A')}")
+        print(f"  Cores: {cpu_info.get('cpu cores', 'N/A')}")
+        print(f"  Threads: {cpu_info.get('siblings', 'N/A')}")
+        print(f"  CPU Frequency: {cpu_info.get('cpu MHz', 'N/A')} MHz (current)")
+    elif platform.system() == "Windows":
+        import wmi
+        c = wmi.WMI()
+        for processor in c.Win32_Processor():
+            print(f"  Model: {processor.Name}")
+            print(f"  Cores: {processor.NumberOfCores}")
+            print(f"  Threads: {processor.NumberOfLogicalProcessors}")
+            print(f"  Current Clock Speed: {processor.CurrentClockSpeed} MHz")
+    elif platform.system() == "Darwin":  # macOS
+        import subprocess
+        print("  Model:", subprocess.getoutput("sysctl -n machdep.cpu.brand_string"))
+        print("  Cores:", subprocess.getoutput("sysctl -n machdep.cpu.core_count"))
+        print("  Threads:", subprocess.getoutput("sysctl -n machdep.cpu.thread_count"))
+        print("  CPU Frequency:", subprocess.getoutput("sysctl -n hw.cpufrequency_max") + " Hz (max)")
+
     print(f"CPU Usage: {psutil.cpu_percent()}%")
     print(f"Memory Usage: {psutil.virtual_memory().percent}%")
+    mem = psutil.virtual_memory()
+    print(f"  Total Memory: {mem.total / MB:.2f} MB")
+    print(f"  Available Memory: {mem.available / MB:.2f} MB")
+
     if torch.cuda.is_available():
-        print(f"GPU Device Name: {torch.cuda.get_device_name(0)}")
-        print(f"GPU Total Memory: {torch.cuda.get_device_properties(0).total_memory / MB:.2f} MB")
-        print(f"GPU Allocated Memory: {torch.cuda.memory_allocated(DEVICE) / MB:.2f} MB")
-        print(f"GPU Cached Memory: {torch.cuda.memory_cached(DEVICE) / MB:.2f} MB")
+        print(f"\n--- GPU Information ---")
+        num_gpus = torch.cuda.device_count()
+        for i in range(num_gpus):
+            print(f"GPU Device {i}: {torch.cuda.get_device_name(i)}")
+            print(f"  Total Memory: {torch.cuda.get_device_properties(i).total_memory / MB:.2f} MB")
+            print(f"  Allocated Memory: {torch.cuda.memory_allocated(i) / MB:.2f} MB")
+            print(f"  Cached Memory: {torch.cuda.memory_cached(i) / MB:.2f} MB")
     else:
-        print("No CUDA-enabled GPU available.")
+        print("\nNo CUDA-enabled GPU available.")
     print("-" * 30)
 
-# Improved Neural Network Training Benchmark
+# Improved Neural Network Training Benchmark with more metrics
 def neural_net_benchmark():
     print("\n--- Neural Network Benchmark ---")
 
@@ -86,14 +123,16 @@ def neural_net_benchmark():
             optimizer.step()
             running_loss += loss.item()
 
-            if (i + 1) % 100 == 0:
-                print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Batch {i+1}/{len(train_loader)}, Loss: {loss.item():.4f}")
+            if (i + 1) % LOG_INTERVAL == 0:
+                print(f"Epoch {epoch+1}/{NUM_EPOCHS}, Batch {i+1}/{len(train_loader)}, Loss: {loss.item():.4f}, "
+                      f"GPU Mem Allocated: {torch.cuda.memory_allocated(DEVICE) / MB:.2f} MB"
+                      if torch.cuda.is_available() else "", end='\r')
 
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
         avg_loss = running_loss / len(train_loader)
         total_loss += avg_loss
-        print(f"Epoch {epoch+1}/{NUM_EPOCHS} completed, Average Loss: {avg_loss:.4f}, Duration: {epoch_duration:.2f} seconds")
+        print(f"\nEpoch {epoch+1}/{NUM_EPOCHS} completed, Average Loss: {avg_loss:.4f}, Duration: {epoch_duration:.2f} seconds")
 
     end_time = time.time()
     training_time = end_time - start_time
