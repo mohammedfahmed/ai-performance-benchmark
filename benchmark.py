@@ -5,6 +5,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer
 from torch.utils.data import DataLoader, TensorDataset
 from torch import nn, optim
 import numpy as np
+from torch.nn.utils import init_empty_weights
 
 # Function to get system information
 def get_system_info():
