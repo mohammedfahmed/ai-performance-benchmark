@@ -19,10 +19,11 @@ LEARNING_RATE = 0.005 # Adjusted learning rate
 WEIGHT_DECAY = 1e-4  # Added weight decay for regularization
 LOG_INTERVAL = 100  # Print loss every LOG_INTERVAL batches
 NETWORK_SIZES = [
-    {"hidden_size": 64, "num_layers": 1, "dropout": 0.1, "name": "SmallNet"},
-    {"hidden_size": 256, "num_layers": 2, "dropout": 0.2, "name": "MediumNet"},
-    {"hidden_size": 512, "num_layers": 3, "dropout": 0.3, "name": "LargeNet"},
+    {"hidden_size": 128, "num_layers": 2, "dropout": 0.1, "name": "SmallNet"},   # Small model
+    {"hidden_size": 512, "num_layers": 4, "dropout": 0.2, "name": "MediumNet"},  # Medium model
+    {"hidden_size": 2048, "num_layers": 12, "dropout": 0.3, "name": "LargeNet"}, # Large model
 ]
+
 
 # Function to get more detailed system information
 def get_system_info():
