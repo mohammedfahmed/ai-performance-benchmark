@@ -25,8 +25,8 @@ This repository provides a benchmarking tool to evaluate your PC's performance f
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/mohammedfahmed/ai-performance-benchmarks.git
-cd ai-performance-benchmarks
+git clone https://github.com/mohammedfahmed/ai-performance-benchmark.git
+cd ai-performance-benchmark
 ```
 
 ### Step 2: Install Dependencies
@@ -34,9 +34,10 @@ cd ai-performance-benchmarks
 Create a virtual environment (optional but recommended):
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # For Linux/MacOS
-venv\Scripts\activate  # For Windows
+conda create -n ai-benchmark python=3.8
+conda activate ai-benchmark
+pip install torch psutil transformers
+pip install -r requirements.txt
 ```
 
 Install the required libraries:
