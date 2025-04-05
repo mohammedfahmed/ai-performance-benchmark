@@ -25,8 +25,8 @@ This repository provides a benchmarking tool to evaluate your PC's performance f
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/ai-performance-benchmark.git
-cd ai-performance-benchmark
+git clone https://github.com/mohammedfahmed/ai-performance-benchmarks.git
+cd ai-performance-benchmarks
 ```
 
 ### Step 2: Install Dependencies
