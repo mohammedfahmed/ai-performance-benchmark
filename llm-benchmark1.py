@@ -68,9 +68,9 @@ def pull_model(model_name):
 
 def evaluate_model(model_name, prompt):
     print(f"\n--- Evaluating Model: {model_name} ---")
-    os.environ['llm_model'] = model_name
-    print(os.getenv('llm_model', 'Not Set'))
-
+    config_file_path = "config.txt"
+    with open(config_file_path, 'w') as file:
+        file.write(f"model_name={model_name}\n")
     try:
         try:
             ollama.show(model_name)
