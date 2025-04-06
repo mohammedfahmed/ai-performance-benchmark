@@ -1,7 +1,8 @@
 import ollama
 import time
 import psutil
-import platform  # For more detailed system info
+import platform
+import matplotlib.pyplot as plt
 
 # Constants
 MB = 1024 ** 2
@@ -13,50 +14,11 @@ MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]  # Updated list w
 
 # Function to get more detailed system information
 def get_system_info():
-    print("--- System Information ---")
-    print(f"Operating System: {platform.system()} {platform.release()}")
-    print(f"CPU: {platform.processor()}")
-    cpu_info = {}
-    if platform.system() == "Linux":
-        with open("/proc/cpuinfo", "r") as f:
-            for line in f:
-                if ":" in line:
-                    key, value = line.strip().split(":", 1)
-                    cpu_info[key.strip()] = value.strip()
-        print(f"  Model Name: {cpu_info.get('model name', 'N/A')}")
-        print(f"  Cores: {cpu_info.get('cpu cores', 'N/A')}")
-        print(f"  Threads: {cpu_info.get('siblings', 'N/A')}")
-        print(f"  CPU Frequency: {cpu_info.get('cpu MHz', 'N/A')} MHz (current)")
-    elif platform.system() == "Windows":
-        import wmi
-        c = wmi.WMI()
-        for processor in c.Win32_Processor():
-            print(f"  Model: {processor.Name}")
-            print(f"  Cores: {processor.NumberOfCores}")
-            print(f"  Threads: {processor.NumberOfLogicalProcessors}")
-            print(f"  Current Clock Speed: {processor.CurrentClockSpeed} MHz")
-    elif platform.system() == "Darwin":  # macOS
-        import subprocess
-        print("  Model:", subprocess.getoutput("sysctl -n machdep.cpu.brand_string"))
-        print("  Cores:", subprocess.getoutput("sysctl -n machdep.cpu.core_count"))
-        print("  Threads:", subprocess.getoutput("sysctl -n machdep.cpu.thread_count"))
-        print("  CPU Frequency:", subprocess.getoutput("sysctl -n hw.cpufrequency_max") + " Hz (max)")
-
-    print(f"CPU Usage (at start): {psutil.cpu_percent()}%")
-    print(f"Memory Usage (at start): {psutil.virtual_memory().percent}%")
-    mem = psutil.virtual_memory()
-    print(f"  Total Memory: {mem.total / MB:.2f} MB")
-    print(f"  Available Memory (at start): {mem.available / MB:.2f} MB")
     print("-" * 40)
 
 # Function to pull models if not available
 def pull_model(model_name):
-    try:
-        print(f"Attempting to pull model: {model_name}")
-        ollama.pull(model_name)
-        print(f"Model {model_name} pulled successfully.")
-    except Exception as e:
-        print(f"Error pulling model {model_name}: {e}")
+    print(f"Error pulling model {model_name}: {e}")
 
 # Function to evaluate a model's performance and track resources
 def evaluate_model(model_name, prompt):
@@ -69,30 +31,76 @@ def evaluate_model(model_name, prompt):
             print(f"Model {model_name} not found locally. Attempting to pull it...")
             pull_model(model_name)
 
-        # Get initial resource usage
+        # List to track CPU and memory usage over time
+        cpu_usage_list = []
+        mem_usage_list = []
+
+        # Start tracking the time for CPU and memory usage
+        start_time = time.time()
         cpu_usage_start = psutil.cpu_percent()
         mem_info_start = psutil.virtual_memory()
         mem_available_start = mem_info_start.available / MB
 
-        start_time = time.time()  # Track the time taken for the response
-        response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
-        response_time = time.time() - start_time  # Calculate response time
+        # Start measuring CPU and memory usage at 2-second intervals
+        while True:
+            cpu_usage = psutil.cpu_percent(interval=2)
+            mem_info = psutil.virtual_memory()
+            mem_available = mem_info.available / MB
 
-        # Get final resource usage
+            cpu_usage_list.append(cpu_usage)
+            mem_usage_list.append(mem_available)
+
+            elapsed_time = time.time() - start_time
+            if elapsed_time > 10:  # Stop after 10 seconds (just for example)
+                break
+
+        # Get final resource usage after the response is generated
+        response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
+        model_response = response['message']['content']
+
+        # Calculate the word count in the response
+        word_count = len(model_response.split())
+        print(f"Response: {model_response}")
+        print(f"Word Count: {word_count} words")
+
+        # Calculate CPU and memory usage deltas
         cpu_usage_end = psutil.cpu_percent()
         mem_info_end = psutil.virtual_memory()
         mem_available_end = mem_info_end.available / MB
 
-        # Calculate resource changes
         cpu_delta = cpu_usage_end - cpu_usage_start
         mem_delta = mem_available_start - mem_available_end  # Memory consumed
 
-        # Extract the model's answer from the response
-        model_response = response['message']['content']
-        print(f"Response: {model_response}")
-        print(f"Response Time: {response_time:.2f} seconds")
-        print(f"CPU Usage (during generation): {cpu_delta:.2f}%")
-        print(f"Memory Consumed (during generation): {mem_delta:.2f} MB")
+        # Calculate average CPU and memory usage during generation
+        avg_cpu_usage = sum(cpu_usage_list) / len(cpu_usage_list)
+        avg_mem_usage = sum(mem_usage_list) / len(mem_usage_list)
+
+        # Print resource usage stats
+        print(f"Response Time: {elapsed_time:.2f} seconds")
+        print(f"Average CPU Usage (during generation): {avg_cpu_usage:.2f}%")
+        print(f"Average Memory Consumed (during generation): {avg_mem_usage:.2f} MB")
+        print(f"Total CPU Usage (during generation): {cpu_delta:.2f}%")
+        print(f"Total Memory Consumed (during generation): {mem_delta:.2f} MB")
+
+        # Plot CPU and memory usage
+        plt.figure(figsize=(10, 5))
+
+        # Plot CPU usage
+        plt.subplot(2, 1, 1)
+        plt.plot(cpu_usage_list, label="CPU Usage (%)")
+        plt.xlabel("Time (s)")
+        plt.ylabel("CPU Usage (%)")
+        plt.legend()
+
+        # Plot memory usage
+        plt.subplot(2, 1, 2)
+        plt.plot(mem_usage_list, label="Memory Available (MB)")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Memory Available (MB)")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
 
     except Exception as e:
         print(f"Error evaluating model {model_name}: {e}")
