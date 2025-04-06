@@ -36,7 +36,6 @@ Create a virtual environment (optional but recommended):
 ```bash
 conda create -n ai-benchmark python=3.8
 conda activate ai-benchmark
-pip install torch psutil transformers
 pip install -r requirements.txt
 ```
 
