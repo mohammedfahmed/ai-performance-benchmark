@@ -2,6 +2,7 @@ import ollama
 import time
 import psutil
 import platform
+import os
 
 GB = 1024 ** 3
 
@@ -68,6 +69,8 @@ def pull_model(model_name):
 
 def evaluate_model(model_name, prompt):
     print(f"\n--- Evaluating Model: {model_name} ---")
+    os.environ['llm_model'] = model_name
+
     try:
         try:
             ollama.show(model_name)
@@ -95,6 +98,7 @@ def evaluate_model(model_name, prompt):
         print(f"Response Time: {response_time:.2f} seconds")
         print(f"CPU Usage (during generation): {cpu_delta:.2f}%")
         print(f"Memory Consumed (during generation): {mem_delta:.2f} GB")
+        os.environ['llm_model'] = ''
 
     except Exception as e:
         print(f"Error evaluating model {model_name}: {e}")
