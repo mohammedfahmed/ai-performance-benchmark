@@ -3,7 +3,6 @@ import time
 import os
 import csv
 
-# Function to get and log processes usage
 def get_ollama_processes_usage(csv_writer):
     # Iterate over all running processes
     for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
@@ -35,7 +34,7 @@ def get_ollama_processes_usage(csv_writer):
 # Function to monitor the processes and save them to CSV
 def monitor_ollama_usage():
     # Open the CSV file in append mode to save data over time
-    with open('ollama_process_usage.csv', mode='a', newline='') as file:
+    with open('ollama_process_usage.csv', mode='w', newline='') as file:
         csv_writer = csv.writer(file)
         
         # Write headers if the file is empty
