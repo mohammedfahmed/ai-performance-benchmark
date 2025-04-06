@@ -1,26 +1,45 @@
 import psutil
 import time
+import os
+import csv
 
-def get_ollama_processes_usage():
+# Function to get and log processes usage
+def get_ollama_processes_usage(csv_writer):
     # Iterate over all running processes
     for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_info']):
         try:
             # Check if the process name contains "ollama"
             if 'ollama' in proc.info['name'].lower():
+                llm_model = os.getenv('llm_model', 'Not Set')  # Default to 'Not Set' if the variable is not found
                 pid = proc.info['pid']
                 name = proc.info['name']
                 cpu_percent = proc.info['cpu_percent']
                 memory_info = proc.info['memory_info']
                 memory_usage = memory_info.rss / (1024 * 1024 * 1024)  # Convert to GB
-                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB")
+
+                # Print the data to the console
+                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB | LLM Model: {llm_model}")
+
+                # Save the results to the CSV file
+                csv_writer.writerow([pid, name, cpu_percent, memory_usage, llm_model])
+
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle processes that might terminate or have restricted access
             continue
 
+# Function to monitor the processes and save them to CSV
 def monitor_ollama_usage():
-    while True:
-        get_ollama_processes_usage()
-        time.sleep(1)  # Wait for 1 second before checking again
+    # Open the CSV file in append mode to save data over time
+    with open('ollama_process_usage.csv', mode='a', newline='') as file:
+        csv_writer = csv.writer(file)
+        
+        # Write headers if the file is empty
+        if file.tell() == 0:
+            csv_writer.writerow(['PID', 'Name', 'CPU (%)', 'Memory (GB)', 'LLM Model'])
+        
+        while True:
+            get_ollama_processes_usage(csv_writer)
+            time.sleep(1)  # Wait for 1 second before checking again
 
 if __name__ == '__main__':
     monitor_ollama_usage()
