@@ -9,7 +9,7 @@ EVALUATION_PROMPT = """
 Please respond with a brief summary of the following text:
 'Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.'
 """
-MODELS_TO_EVALUATE = ["llama2"]#, "mistral", "mixtral", "llava"]  # Updated list with more Ollama-friendly models
+MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]  # Updated list with more Ollama-friendly models
 
 # Function to get more detailed system information
 def get_system_info():
