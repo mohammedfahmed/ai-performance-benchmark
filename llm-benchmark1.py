@@ -1,18 +1,20 @@
 import ollama
 import time
 import psutil
-import platform  # For more detailed system info
+import platform 
 
-# Constants
+
 GB = 1024 ** 3
+
 EVALUATION_PROMPT = """
 Please respond with a brief summary of the following text:
 'Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.'
 """
-MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]  # Updated list with more Ollama-friendly models
+
+MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]  
 
 # Function to get more detailed system information
-def get_system_info():
+def print_system_info():
     print("--- System Information ---")
     print(f"Operating System: {platform.system()} {platform.release()}")
     print(f"CPU: {platform.processor()}")
@@ -42,14 +44,23 @@ def get_system_info():
         print("  Threads:", subprocess.getoutput("sysctl -n machdep.cpu.thread_count"))
         print("  CPU Frequency:", subprocess.getoutput("sysctl -n hw.cpufrequency_max") + " Hz (max)")
 
-    print(f"CPU Usage (at start): {psutil.cpu_percent()}%")
-    print(f"Memory Usage (at start): {psutil.virtual_memory().percent}%")
-    mem = psutil.virtual_memory()
-    print(f"  Total Memory: {mem.total / GB:.2f} GB")
-    print(f"  Available Memory (at start): {mem.available / GB:.2f} GB")
-    print("-" * 40)
 
-# Function to pull models if not available
+    cpu_usage_at_start_percent = psutil.cpu_percent()
+    mem_usage_at_start_percent = psutil.virtual_memory().percent
+
+    print(f"CPU Usage (at start): {cpu_usage_at_start_percent}%")
+    print(f"Memory Usage (at start): {mem_usage_at_start_percent}%")
+    mem = psutil.virtual_memory()
+
+    mem_total = mem.total / GB
+    mem_available_at_start_gb = mem.available / GB
+
+
+    print(f"  Total Memory: {mem_total:.2f} GB")
+    print(f"  Available Memory (at start): {mem_available_at_start_gb:.2f} GB")
+    print("-" * 40)
+    return cpu_usage_at_start_percent, mem_available_at_start_gb
+
 def pull_model(model_name):
     try:
         print(f"Attempting to pull model: {model_name}")
@@ -58,38 +69,34 @@ def pull_model(model_name):
     except Exception as e:
         print(f"Error pulling model {model_name}: {e}")
 
-# Function to evaluate a model's performance and track resources
 def evaluate_model(model_name, prompt):
+
     print(f"\n--- Evaluating Model: {model_name} ---")
     try:
-        # Check if the model is available, if not, try pulling it
         try:
-            ollama.show(model_name)  # Check if model exists locally
+            ollama.show(model_name)
         except Exception as e:
             print(f"Model {model_name} not found locally. Attempting to pull it...")
             pull_model(model_name)
 
-        # Get initial resource usage
+
         cpu_usage_start = psutil.cpu_percent()
-        mem_info_start = psutil.virtual_memory()
-        mem_available_start = mem_info_start.available / GB
+        mem_available_start = psutil.virtual_memory().available / GB
 
-        start_time = time.time()  # Track the time taken for the response
+        start_time = time.time() 
         response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
-        response_time = time.time() - start_time  # Calculate response time
+        response_time = time.time() - start_time 
 
-        # Get final resource usage
         cpu_usage_end = psutil.cpu_percent()
         mem_info_end = psutil.virtual_memory()
         mem_available_end = mem_info_end.available / GB
 
-        # Calculate resource changes
         cpu_delta = cpu_usage_end - cpu_usage_start
-        mem_delta = mem_available_start - mem_available_end  # Memory consumed
+        mem_delta = mem_available_end - mem_available_start  
 
         # Extract the model's answer from the response
         model_response = response['message']['content']
-        print(f"Response: {model_response}")
+        print(f"Response length: {len(model_response)}")
         print(f"Response Time: {response_time:.2f} seconds")
         print(f"CPU Usage (during generation): {cpu_delta:.2f}%")
         print(f"Memory Consumed (during generation): {mem_delta:.2f} GB")
