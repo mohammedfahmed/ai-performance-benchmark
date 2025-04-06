@@ -11,8 +11,8 @@ def get_ollama_processes_usage():
                 name = proc.info['name']
                 cpu_percent = proc.info['cpu_percent']
                 memory_info = proc.info['memory_info']
-                memory_usage = memory_info.rss / (1024 * 1024)  # Convert to MB
-                print(f"Process: {name} (PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} MB")
+                memory_usage = memory_info.rss / (1024 * 1024 * 1024)  # Convert to GB
+                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB")
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle processes that might terminate or have restricted access
             continue
