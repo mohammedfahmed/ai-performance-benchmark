@@ -13,7 +13,6 @@ Please respond with a brief summary of the following text:
 
 MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]
 
-# Function to get more detailed system information
 def print_system_info():
     print("--- System Information ---")
     print(f"Operating System: {platform.system()} {platform.release()}")
