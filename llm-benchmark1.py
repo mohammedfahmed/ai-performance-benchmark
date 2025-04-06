@@ -70,6 +70,7 @@ def pull_model(model_name):
 def evaluate_model(model_name, prompt):
     print(f"\n--- Evaluating Model: {model_name} ---")
     os.environ['llm_model'] = model_name
+    print(os.getenv('llm_model', 'Not Set'))
 
     try:
         try:
