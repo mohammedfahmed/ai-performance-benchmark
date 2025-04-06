@@ -1,8 +1,7 @@
 import ollama
 import time
 import psutil
-import platform 
-
+import platform
 
 GB = 1024 ** 3
 
@@ -11,7 +10,7 @@ Please respond with a brief summary of the following text:
 'Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.'
 """
 
-MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]  
+MODELS_TO_EVALUATE = ["llama2", "mistral", "mixtral", "llava"]
 
 # Function to get more detailed system information
 def print_system_info():
@@ -44,7 +43,6 @@ def print_system_info():
         print("  Threads:", subprocess.getoutput("sysctl -n machdep.cpu.thread_count"))
         print("  CPU Frequency:", subprocess.getoutput("sysctl -n hw.cpufrequency_max") + " Hz (max)")
 
-
     cpu_usage_at_start_percent = psutil.cpu_percent()
     mem_usage_at_start_percent = psutil.virtual_memory().percent
 
@@ -54,7 +52,6 @@ def print_system_info():
 
     mem_total = mem.total / GB
     mem_available_at_start_gb = mem.available / GB
-
 
     print(f"  Total Memory: {mem_total:.2f} GB")
     print(f"  Available Memory (at start): {mem_available_at_start_gb:.2f} GB")
@@ -70,7 +67,6 @@ def pull_model(model_name):
         print(f"Error pulling model {model_name}: {e}")
 
 def evaluate_model(model_name, prompt):
-
     print(f"\n--- Evaluating Model: {model_name} ---")
     try:
         try:
@@ -79,20 +75,19 @@ def evaluate_model(model_name, prompt):
             print(f"Model {model_name} not found locally. Attempting to pull it...")
             pull_model(model_name)
 
-
         cpu_usage_start = psutil.cpu_percent()
         mem_available_start = psutil.virtual_memory().available / GB
 
-        start_time = time.time() 
+        start_time = time.time()
         response = ollama.chat(model=model_name, messages=[{"role": "user", "content": prompt}])
-        response_time = time.time() - start_time 
+        response_time = time.time() - start_time
 
         cpu_usage_end = psutil.cpu_percent()
         mem_info_end = psutil.virtual_memory()
         mem_available_end = mem_info_end.available / GB
 
         cpu_delta = cpu_usage_end - cpu_usage_start
-        mem_delta = mem_available_end - mem_available_start  
+        mem_delta = mem_available_end - mem_available_start
 
         # Extract the model's answer from the response
         model_response = response['message']['content']
@@ -108,7 +103,7 @@ def evaluate_model(model_name, prompt):
 
 # Main function to run the evaluations
 def main():
-    get_system_info()
+    print_system_info()
     for model in MODELS_TO_EVALUATE:
         evaluate_model(model, EVALUATION_PROMPT)
 
