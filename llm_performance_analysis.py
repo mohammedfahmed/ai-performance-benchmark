@@ -24,8 +24,14 @@ plt.xlabel('Index')
 plt.ylabel('CPU Usage (%)')
 plt.grid(True)
 plt.legend(title='LLM Models')
+
+# Display statistics on the plot
 plt.text(0.5, 0.9, f'Mean: {cpu_mean:.2f}%\nMin: {cpu_min:.2f}%\nMax: {cpu_max:.2f}%', 
          transform=plt.gca().transAxes, fontsize=12, va='top', ha='center')
+
+# Ensure consistent x-axis range (based on data length)
+plt.xlim(0, len(data) - 1)
+
 plt.tight_layout()
 plt.savefig('results/all_models_cpu_usage.png')
 plt.close()
@@ -44,10 +50,16 @@ plt.xlabel('Index')
 plt.ylabel('Memory Usage (GB)')
 plt.grid(True)
 plt.legend(title='LLM Models')
+
+# Display statistics on the plot
 plt.text(0.5, 0.9, f'Mean: {mem_mean:.2f} GB\nMin: {mem_min:.2f} GB\nMax: {mem_max:.2f} GB', 
          transform=plt.gca().transAxes, fontsize=12, va='top', ha='center')
+
+# Ensure consistent x-axis range (based on data length)
+plt.xlim(0, len(data) - 1)
+
 plt.tight_layout()
 plt.savefig('results/all_models_memory_usage.png')
 plt.close()
 
-print("Combined plots have been saved in the 'results/' folder.")
+print("Combined plots with shared x-axis have been saved in the 'results/' folder.")
