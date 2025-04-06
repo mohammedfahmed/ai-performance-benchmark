@@ -10,7 +10,12 @@ def get_ollama_processes_usage(csv_writer):
         try:
             # Check if the process name contains "ollama"
             if 'ollama' in proc.info['name'].lower():
-                llm_model = os.getenv('llm_model', 'Not Set')  
+                config_file_path = "config.txt"
+                with open(config_file_path, 'r') as file:
+                    for line in file:
+                        if line.startswith("model_name="):
+                            llm_model = line.split('=')[1].strip()
+                            break 
                 pid = proc.info['pid']
                 name = proc.info['name']
                 cpu_percent = proc.info['cpu_percent']
