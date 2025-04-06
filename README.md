@@ -39,18 +39,6 @@ conda activate ai-benchmark
 pip install -r requirements.txt
 ```
 
-Install the required libraries:
-
-```bash
-pip install -r requirements.txt
-```
-
-If you don't have a `requirements.txt` file, you can manually install the dependencies:
-
-```bash
-pip install torch psutil transformers
-```
-
 ### Step 3: Set up CUDA (optional)
 
 If you want to use GPU for benchmarking, ensure that you have CUDA and cuDNN installed on your machine. You can follow the instructions from the official PyTorch website: https://pytorch.org/get-started/locally/
