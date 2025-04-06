@@ -5,7 +5,7 @@ import threading
 import matplotlib.pyplot as plt
 
 # Constants
-MB = 1024 ** 2
+GB = 1024 ** 3  # 1 GB = 1024^3 bytes
 EVALUATION_PROMPT = """
 Please respond with a brief summary of the following text:
 'Artificial intelligence (AI) refers to the simulation of human intelligence in machines that are programmed to think like humans and mimic their actions. The term may also be applied to any machine that exhibits traits associated with a human mind such as learning and problem-solving.'
@@ -25,7 +25,7 @@ def collect_resource_usage(cpu_usage_list, mem_usage_list, stop_event):
     while not stop_event.is_set():
         cpu_usage = psutil.cpu_percent(interval=2)
         mem_info = psutil.virtual_memory()
-        mem_available = mem_info.available / MB
+        mem_available = mem_info.available / GB  # Convert memory to GB
 
         cpu_usage_list.append(cpu_usage)
         mem_usage_list.append(mem_available)
@@ -76,7 +76,7 @@ def evaluate_model(model_name, prompt):
         # Print resource usage stats
         print(f"Response Time: {response_time:.2f} seconds")
         print(f"Average CPU Usage (during generation): {avg_cpu_usage:.2f}%")
-        print(f"Average Memory Consumed (during generation): {avg_mem_usage:.2f} MB")
+        print(f"Average Memory Consumed (during generation): {avg_mem_usage:.2f} GB")
 
         # Plot CPU and memory usage
         plt.figure(figsize=(10, 5))
@@ -90,9 +90,9 @@ def evaluate_model(model_name, prompt):
 
         # Plot memory usage
         plt.subplot(2, 1, 2)
-        plt.plot(mem_usage_list, label="Memory Available (MB)")
+        plt.plot(mem_usage_list, label="Memory Available (GB)")
         plt.xlabel("Time (s)")
-        plt.ylabel("Memory Available (MB)")
+        plt.ylabel("Memory Available (GB)")
         plt.legend()
 
         plt.tight_layout()
