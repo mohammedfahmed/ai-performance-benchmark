@@ -22,7 +22,7 @@ for model, group in data.groupby('LLM Model'):
     
     # Get the first (minimum) timestamp for the current model
     start_time = group['Timestamp'].min()  # Use min() to get the first timestamp for the model
-    plot(start_time)
+    print(start_time)
     
     # Update the relative time for the current model
     data.loc[data['LLM Model'] == model, 'Relative Time (s)'] = (data['Timestamp'] - start_time).dt.total_seconds()
