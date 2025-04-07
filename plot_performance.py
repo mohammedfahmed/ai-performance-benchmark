@@ -21,50 +21,36 @@ for model, group in data.groupby('LLM Model'):
     start_time = group['Timestamp'].min()  # Use min() to get the first timestamp for the model
     data.loc[data['LLM Model'] == model, 'Relative Time (s)'] = (data['Timestamp'] - start_time).dt.total_seconds()
 
-# Step 4: Combine CPU usage for all models in one plot with relative time on the x-axis
-plt.figure(figsize=(10, 6))
-for model, group in data.groupby('LLM Model'):
-    plt.plot(group['Relative Time (s)'], group['CPU (%)'], marker='o', label=model)
+# Step 4: Create subplots for CPU usage and Memory usage for each model
+models = data['LLM Model'].unique()  # Get the unique models
 
-# Add stats to CPU plot
-cpu_mean = data['CPU (%)'].mean()
-cpu_min = data['CPU (%)'].min()
-cpu_max = data['CPU (%)'].max()
-plt.title('CPU Usage for All LLM Models')
-plt.xlabel('Relative Time (s)')
-plt.ylabel('CPU Usage (%)')
-plt.grid(True)
-plt.legend(title='LLM Models')
+# Create a figure with subplots for CPU and Memory usage
+fig, axes = plt.subplots(len(models), 2, figsize=(12, len(models) * 6))  # 2 columns for CPU and Memory
 
-# Display statistics on the plot
-plt.text(0.5, 0.9, f'Mean: {cpu_mean:.2f}%\nMin: {cpu_min:.2f}%\nMax: {cpu_max:.2f}%', 
-         transform=plt.gca().transAxes, fontsize=12, va='top', ha='center')
+# Loop through each model to create its subplot for CPU and Memory
+for i, model in enumerate(models):
+    # CPU plot
+    ax1 = axes[i, 0] if len(models) > 1 else axes[0]
+    group = data[data['LLM Model'] == model]
+    ax1.plot(group['Relative Time (s)'], group['CPU (%)'], marker='o', label=model)
+    ax1.set_title(f'CPU Usage for {model}')
+    ax1.set_xlabel('Relative Time (s)')
+    ax1.set_ylabel('CPU Usage (%)')
+    ax1.grid(True)
+    ax1.legend(title='LLM Model')
+    
+    # Memory plot
+    ax2 = axes[i, 1] if len(models) > 1 else axes[1]
+    ax2.plot(group['Relative Time (s)'], group['Memory (GB)'], marker='o', label=model)
+    ax2.set_title(f'Memory Usage for {model}')
+    ax2.set_xlabel('Relative Time (s)')
+    ax2.set_ylabel('Memory Usage (GB)')
+    ax2.grid(True)
+    ax2.legend(title='LLM Model')
 
+# Adjust layout and save the figure
 plt.tight_layout()
-plt.savefig('results/all_models_cpu_usage_relative_time.png')
+plt.savefig('results/all_models_performance_subplots.png')
 plt.close()
 
-# Step 5: Combine Memory usage for all models in one plot with relative time on the x-axis
-plt.figure(figsize=(10, 6))
-for model, group in data.groupby('LLM Model'):
-    plt.plot(group['Relative Time (s)'], group['Memory (GB)'], marker='o', label=model)
-
-# Add stats to Memory plot
-mem_mean = data['Memory (GB)'].mean()
-mem_min = data['Memory (GB)'].min()
-mem_max = data['Memory (GB)'].max()
-plt.title('Memory Usage for All LLM Models')
-plt.xlabel('Relative Time (s)')
-plt.ylabel('Memory Usage (GB)')
-plt.grid(True)
-plt.legend(title='LLM Models')
-
-# Display statistics on the plot
-plt.text(0.5, 0.9, f'Mean: {mem_mean:.2f} GB\nMin: {mem_min:.2f} GB\nMax: {mem_max:.2f} GB', 
-         transform=plt.gca().transAxes, fontsize=12, va='top', ha='center')
-
-plt.tight_layout()
-plt.savefig('results/all_models_memory_usage_relative_time.png')
-plt.close()
-
-print("Combined plots with relative time axes have been saved in the 'results/' folder.")
+print("Subplots for CPU and Memory usage have been saved in the 'results/' folder.")
