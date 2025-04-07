@@ -17,8 +17,13 @@ data['Relative Time (s)'] = 0  # Initialize the new column for relative time
 
 # Group by 'LLM Model' and compute the relative time for each group
 for model, group in data.groupby('LLM Model'):
+    # Sort the group by Timestamp to ensure correct order
+    group = group.sort_values(by='Timestamp')
+    
     # Get the first (minimum) timestamp for the current model
     start_time = group['Timestamp'].min()  # Use min() to get the first timestamp for the model
+    
+    # Update the relative time for the current model
     data.loc[data['LLM Model'] == model, 'Relative Time (s)'] = (data['Timestamp'] - start_time).dt.total_seconds()
 
 # Step 4: Combine CPU usage for all models in one plot with relative time on the x-axis
