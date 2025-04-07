@@ -2,6 +2,7 @@ import psutil
 import time
 import os
 import csv
+from datetime import datetime
 
 def get_ollama_processes_usage(csv_writer):
     # Iterate over all running processes
@@ -21,11 +22,14 @@ def get_ollama_processes_usage(csv_writer):
                 memory_info = proc.info['memory_info']
                 memory_usage = memory_info.rss / (1024 * 1024 * 1024)  # Convert to GB
 
-                # Print the data to the console
-                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB | LLM Model: {llm_model}")
+                # Capture the current timestamp
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-                # Save the results to the CSV file
-                csv_writer.writerow([pid, name, cpu_percent, memory_usage, llm_model])
+                # Print the data to the console
+                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB | LLM Model: {llm_model} | Timestamp: {timestamp}")
+
+                # Save the results to the CSV file, including the timestamp
+                csv_writer.writerow([timestamp, pid, name, cpu_percent, memory_usage, llm_model])
 
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle processes that might terminate or have restricted access
@@ -39,7 +43,7 @@ def monitor_ollama_usage():
         
         # Write headers if the file is empty
         if file.tell() == 0:
-            csv_writer.writerow(['PID', 'Name', 'CPU (%)', 'Memory (GB)', 'LLM Model'])
+            csv_writer.writerow(['Timestamp', 'PID', 'Name', 'CPU (%)', 'Memory (GB)', 'LLM Model'])
         
         while True:
             get_ollama_processes_usage(csv_writer)
