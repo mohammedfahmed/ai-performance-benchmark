@@ -98,7 +98,8 @@ def evaluate_model(model_name, prompt):
         print(f"Response Time: {response_time:.2f} seconds")
         print(f"CPU Usage (during generation): {cpu_delta:.2f}%")
         print(f"Memory Consumed (during generation): {mem_delta:.2f} GB")
-        os.environ['llm_model'] = ''
+        with open(config_file_path, 'w') as file:
+            file.write(f"model_name= \n")
 
     except Exception as e:
         print(f"Error evaluating model {model_name}: {e}")
