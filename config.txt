@@ -1,1 +1,1 @@
-model_name=llava
+model_name= 
