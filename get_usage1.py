@@ -10,24 +10,12 @@ def get_ollama_processes_usage(csv_writer):
         try:
             # Check if the process name contains "ollama"
             if 'ollama' in proc.info['name'].lower():
-                config_file_path = "config.txt"  # model_name=llama2, prompt_index=1
-
-                # Initialize the variables
-                llm_model = None
-                prompt_index = None
-
-                # Read the config file to extract model_name and prompt_index
+                config_file_path = "config.txt"
                 with open(config_file_path, 'r') as file:
                     for line in file:
-                        line = line.strip()  # Remove leading/trailing whitespace
-                        llm_model = line.split('model_name=')[1].split(',')[0].strip()
-                        print(llm_model)
-                        prompt_index = int(line.split('prompt_index=')[1].strip())  # Assuming prompt_index is an integer
-                            
-                        # Break the loop if both values are found
-                        if llm_model and prompt_index is not None:
-                            break
-                            
+                        if line.startswith("model_name="):
+                            llm_model = line.split('=')[1].strip()
+                            break 
                 pid = proc.info['pid']
                 name = proc.info['name']
                 cpu_percent = proc.info['cpu_percent']
@@ -38,11 +26,10 @@ def get_ollama_processes_usage(csv_writer):
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                 # Print the data to the console
-                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB | LLM Model: {llm_model} | Prompt Index: {prompt_index} | Timestamp: {timestamp}")
+                print(f"(PID: {pid}) | CPU: {cpu_percent}% | Memory: {memory_usage:.2f} GB | LLM Model: {llm_model} | Timestamp: {timestamp}")
 
-                # Save the results to the CSV file, including the timestamp and prompt_index
-                csv_writer.writerow([timestamp, pid, name, cpu_percent, memory_usage, llm_model, prompt_index])
-
+                # Save the results to the CSV file, including the timestamp
+                csv_writer.writerow([timestamp, pid, name, cpu_percent, memory_usage, llm_model])
 
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             # Handle processes that might terminate or have restricted access
