@@ -21,7 +21,6 @@ def get_ollama_processes_usage(csv_writer):
                     for line in file:
                         line = line.strip()  # Remove leading/trailing whitespace
                         llm_model = line.split('model_name=')[1].split(',')[0].strip()
-                        print(llm_model)
                         prompt_index = int(line.split('prompt_index=')[1].strip())  # Assuming prompt_index is an integer
                             
                         # Break the loop if both values are found

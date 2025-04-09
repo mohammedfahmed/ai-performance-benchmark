@@ -5,8 +5,8 @@ CPU: Intel64 Family 6 Model 44 Stepping 2, GenuineIntel
   Cores: 6
   Threads: 6
   Current Clock Speed: 2927 MHz
-CPU Usage (at start): 28.8%
-Memory Usage (at start): 10.2%
+CPU Usage (at start): 45.4%
+Memory Usage (at start): 10.5%
   Total Memory: 95.98 GB
-  Available Memory (at start): 86.24 GB
+  Available Memory (at start): 85.90 GB
 ----------------------------------------
