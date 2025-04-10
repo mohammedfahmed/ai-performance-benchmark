@@ -1,4 +1,4 @@
-Timestamp,PID,Name,CPU (%),Memory (GB),LLM Model
+Timestamp,PID,Name,CPU (%),Memory (GB),LLM Model,Prompt Index
 2025-04-08 21:52:01,2368,ollama.exe,0.0,0.025852203369140625,none,0
 2025-04-08 21:52:02,11632,ollama app.exe,0.0,0.02374267578125,none,0
 2025-04-08 21:52:03,2368,ollama.exe,0.0,0.025852203369140625,none,0

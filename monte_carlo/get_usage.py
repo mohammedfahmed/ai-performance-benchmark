@@ -55,7 +55,7 @@ def monitor_ollama_usage():
         
         # Write headers if the file is empty
         if file.tell() == 0:
-            csv_writer.writerow(['Timestamp', 'PID', 'Name', 'CPU (%)', 'Memory (GB)', 'LLM Model'])
+            csv_writer.writerow(['Timestamp', 'PID', 'Name', 'CPU (%)', 'Memory (GB)', 'LLM Model', 'Prompt Index'])
         
         while True:
             get_ollama_processes_usage(csv_writer)

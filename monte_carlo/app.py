@@ -44,7 +44,12 @@ with col1:
     llm_models = data['LLM Model'].unique()
     selected_model = st.selectbox('Select LLM Model', llm_models)
 
-filtered_data = data[data['LLM Model'] == selected_model]
+    # Dropdown to select the prompt index or another column (you can change 'Prompt Index' to any column you want to filter by)
+    prompt_indexes = data['Prompt Index'].unique()  # Assuming 'Prompt Index' is a column
+    selected_prompt_index = st.selectbox('Select Prompt Index', prompt_indexes)
+
+# Filter data based on both model and prompt index selection
+filtered_data = data[(data['LLM Model'] == selected_model) & (data['Prompt Index'] == selected_prompt_index)]
 
 # Creating a Time column in seconds
 filtered_data['Time (s)'] = 0
@@ -65,7 +70,7 @@ with plot_col1:
     for pid in filtered_data['PID'].unique():
         pid_data = filtered_data[filtered_data['PID'] == pid]
         ax.plot(pid_data['Time (s)'], pid_data['CPU (%)'], label=f'PID: {pid}', linewidth=2, marker='o')
-    ax.set_title(f'CPU Usage vs. Time (LLM Model: {selected_model})', fontsize=18, fontweight='bold', color='#4B4B4B')
+    ax.set_title(f'CPU Usage vs. Time (LLM Model: {selected_model}, Prompt Index: {selected_prompt_index})', fontsize=18, fontweight='bold', color='#4B4B4B')
     ax.set_xlabel('Time (s)', fontsize=14)
     ax.set_ylabel('CPU Usage (%)', fontsize=14)
     ax.set_ylim(-10, 600)
@@ -80,7 +85,7 @@ with plot_col2:
     for pid in filtered_data['PID'].unique():
         pid_data = filtered_data[filtered_data['PID'] == pid]
         ax.plot(pid_data['Time (s)'], pid_data['Memory (GB)'], label=f'PID: {pid}', linewidth=2, marker='x')
-    ax.set_title(f'Memory Usage vs. Time (LLM Model: {selected_model})', fontsize=18, fontweight='bold', color='#4B4B4B')
+    ax.set_title(f'Memory Usage vs. Time (LLM Model: {selected_model}, Prompt Index: {selected_prompt_index})', fontsize=18, fontweight='bold', color='#4B4B4B')
     ax.set_xlabel('Time (s)', fontsize=14)
     ax.set_ylabel('Memory Usage (GB)', fontsize=14)
     ax.set_ylim(-1, 30)
@@ -90,7 +95,7 @@ with plot_col2:
     st.pyplot(fig2)
 
 # Display the dataframe in a styled format
-st.markdown(f"### Data Overview for {selected_model}")
+st.markdown(f"### Data Overview for {selected_model} and Prompt Index: {selected_prompt_index}")
 st.dataframe(filtered_data.style.set_properties(**{
     'background-color': 'white',
     'color': 'black',
@@ -99,8 +104,8 @@ st.dataframe(filtered_data.style.set_properties(**{
 }))
 
 # Save the plots to the results folder
-cpu_plot_path = f'results/cpu_usage_{selected_model}.png'
-memory_plot_path = f'results/memory_usage_{selected_model}.png'
+cpu_plot_path = f'results/cpu_usage_{selected_model}_{selected_prompt_index}.png'
+memory_plot_path = f'results/memory_usage_{selected_model}_{selected_prompt_index}.png'
 
 fig1.savefig(cpu_plot_path, dpi=300, bbox_inches='tight')
 fig2.savefig(memory_plot_path, dpi=300, bbox_inches='tight')
